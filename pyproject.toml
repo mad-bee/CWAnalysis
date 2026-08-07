@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pypdf>=4.0", "pytest>=8.0"]
+build = ["pyinstaller>=6.0"]
 
 [project.scripts]
 cw-analyse = "cw_analyser.cli:main"

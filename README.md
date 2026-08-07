@@ -25,6 +25,24 @@ py -m venv .venv
 
 Python 3.10 or later is required.
 
+## Standalone Windows executable
+
+Windows users can run `CWAnalysis.exe` without installing Python. Download the executable and run:
+
+```powershell
+CWAnalysis.exe input.csv
+```
+
+The generated report and CSV files are written beneath `output` in the current directory. Windows may show a SmartScreen warning because community builds are not code-signed.
+
+To build the executable from source:
+
+```powershell
+.\build_windows.ps1
+```
+
+The build script creates `dist\CWAnalysis.exe` using PyInstaller. A Windows build must be produced on Windows; executables for other operating systems must be built on those operating systems.
+
 ## Run
 
 ```powershell

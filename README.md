@@ -9,6 +9,7 @@ Python 3 application that validates recorded CW timing CSV files, analyses every
 - Per-character and per-position descriptive statistics, 95% confidence intervals, skewness, excess kurtosis, MAD, CV, and outlier counts.
 - IQR or modified Z-score outlier detection.
 - Linked dual-axis plots: dah timing uses the primary left axis and dit timing uses the secondary right axis, fixed at an exact 3:1 scale. Plots retain reproducible jitter, coloured element types, outliers, medians, and ideal timing references.
+- First-page histograms for all dits, all dahs, the final dah in each letter, and the first dah of every adjacent dah pair.
 - Separate visual summary pages for A-Z and 0-9. Letter panels reserve four element positions; number panels reserve five. Missing characters remain visible as labelled `No samples` panels. Detailed report pages contain six plots each.
 - Character consistency, position-bias observations, estimated WPM for millisecond input, and a transparent heuristic fist-quality score.
 - A4 or Letter PDF report, summary CSV, and rejected-row CSV.

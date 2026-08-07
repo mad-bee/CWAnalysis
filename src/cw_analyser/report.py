@@ -115,7 +115,7 @@ def _overview_story(session, overview, styles, config):
         Paragraph("CW Analysis", styles["Title"]),
         Paragraph("CWAnalysis is produced by M0MZB", styles["Attribution"]),
         Paragraph(f"Source data: {html.escape(str(session.source))}", styles["SourcePath"]), Spacer(1, 4 * mm),
-        table, Spacer(1, 4 * mm), Image(str(overview), width=174 * mm, height=70 * mm),
+        table, Spacer(1, 4 * mm), Image(str(overview), width=174 * mm, height=126 * mm),
         Spacer(1, 3 * mm), Paragraph("Rejected input", styles["Heading2"]),
         Paragraph(rejected, styles["BodyText"]), Spacer(1, 3 * mm),
         Paragraph("Recommendations", styles["Heading2"]),
@@ -150,6 +150,11 @@ def _explanatory_notes(styles, config):
         Paragraph(
             "The green dashed line marks the session median dit on the right axis and the corresponding ideal 3-times dah duration on the left. "
             "On the overview histograms, the black line is the observed median and the green line is the ideal timing reference.",
+            styles["NotesBody"],
+        ),
+        Paragraph(
+            "The first page also isolates two dah populations across A-Z: the final dah occurring in each transmitted letter, and the first dah of every adjacent dah pair. "
+            "Adjacent pairs overlap, so a three-dah run contributes positions 1 and 2 to the pair histogram.",
             styles["NotesBody"],
         ),
         Paragraph("Box-and-whisker plots", styles["Heading2"]),

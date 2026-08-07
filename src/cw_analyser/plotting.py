@@ -163,7 +163,15 @@ def _draw_element(axis, position: int, values: np.ndarray, mask: np.ndarray, kin
             body.set_facecolor(colour)
             body.set_edgecolor(colour)
             body.set_alpha(0.35)
-    elif config.plot_type in {"strip", "histogram"}:
+    elif config.plot_type == "histogram":
+        bins = min(8, max(3, round(math.sqrt(len(values)))))
+        counts, edges = np.histogram(values, bins=bins)
+        centres = (edges[:-1] + edges[1:]) / 2.0
+        half_widths = counts / max(1, counts.max()) * width / 2.0
+        heights = np.diff(edges) * 0.82
+        axis.barh(centres, half_widths * 2.0, height=heights, left=position - half_widths,
+                  color=colour, edgecolor=colour, linewidth=0.5, alpha=0.38, zorder=2)
+    elif config.plot_type == "strip":
         pass
     else:
         axis.boxplot(values, positions=[position], widths=width, patch_artist=True, showfliers=False,

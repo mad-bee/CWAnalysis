@@ -89,7 +89,7 @@ def write_pdf(session: SessionAnalysis, path: Path, config: ReportConfig) -> Pat
         for index, plot in enumerate(detail_paths):
             story.extend([
                 Paragraph("Detailed Character Analysis", styles["Title"]),
-                Paragraph(f"Source data: {html.escape(str(session.source.resolve()))}", styles["SourcePath"]),
+                Paragraph(f"Source data: {html.escape(str(session.source))}", styles["SourcePath"]),
                 Spacer(1, 2 * mm), Image(str(plot), width=174 * mm, height=223 * mm),
             ])
             if index != len(detail_paths) - 1:
@@ -113,7 +113,8 @@ def _overview_story(session, overview, styles, config):
     recommendations = _recommendations(session)
     return [
         Paragraph("CW Analysis", styles["Title"]),
-        Paragraph(f"Source data: {html.escape(str(session.source.resolve()))}", styles["SourcePath"]), Spacer(1, 4 * mm),
+        Paragraph("CWAnalysis is produced by M0MZB", styles["Attribution"]),
+        Paragraph(f"Source data: {html.escape(str(session.source))}", styles["SourcePath"]), Spacer(1, 4 * mm),
         table, Spacer(1, 4 * mm), Image(str(overview), width=174 * mm, height=70 * mm),
         Spacer(1, 3 * mm), Paragraph("Rejected input", styles["Heading2"]),
         Paragraph(rejected, styles["BodyText"]), Spacer(1, 3 * mm),
@@ -198,7 +199,7 @@ def _header_footer(canvas, doc):
     canvas.saveState()
     canvas.setFont("Helvetica", 7)
     canvas.setFillColor(colors.HexColor("#606A78"))
-    canvas.drawString(doc.leftMargin, 8 * mm, "CW Analysis")
+    canvas.drawString(doc.leftMargin, 8 * mm, "CWAnalysis is produced by M0MZB")
     canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, 8 * mm, f"Page {doc.page}")
     canvas.restoreState()
 
@@ -213,6 +214,9 @@ def _styles():
     styles.add(ParagraphStyle("SourcePath", parent=styles["Normal"], alignment=TA_CENTER,
                               textColor=colors.HexColor("#536273"), fontSize=7.5, leading=10,
                               wordWrap="CJK"))
+    styles.add(ParagraphStyle("Attribution", parent=styles["Normal"], alignment=TA_CENTER,
+                              textColor=colors.HexColor("#173A5E"), fontSize=9, leading=12,
+                              spaceAfter=2))
     styles.add(ParagraphStyle("SmallBody", parent=styles["BodyText"], fontSize=8, leading=10))
     styles.add(ParagraphStyle("NotesBody", parent=styles["BodyText"], fontSize=9, leading=12,
                               spaceAfter=3))

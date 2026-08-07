@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "CWAnalysis"
-version = "1.0.0"
+version = "1.0.1"
 description = "Per-position Morse element timing analysis and PDF reporting"
 readme = "README.md"
 requires-python = ">=3.10"

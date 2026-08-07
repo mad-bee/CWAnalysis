@@ -16,6 +16,43 @@ Python 3 application that validates recorded CW timing CSV files, analyses every
 
 The quality and consistency scores are heuristic coaching indicators, not calibrated scientific or medical measures. A report generated without timestamps does not include trend analysis or session duration; the current CSV format has no time field.
 
+## Plot examples
+
+All plots analyse each element position separately. Dah timing uses the red left axis, dit timing uses the blue right axis, and the axes are linked at the ideal 3:1 ratio. The examples below show the same character C data in each available mode.
+
+| Box (`--plot-type box`) | Violin (`--plot-type violin`) |
+| --- | --- |
+| ![Box-and-whisker plot](docs/images/plot-box.png) | ![Violin plot](docs/images/plot-violin.png) |
+| **Strip (`--plot-type strip`)** | **Histogram (`--plot-type histogram`)** |
+| ![Strip plot](docs/images/plot-strip.png) | ![Per-position histogram](docs/images/plot-histogram.png) |
+
+- **Box:** median, quartiles, 1.5-IQR whiskers, individual measurements, and orange outliers.
+- **Violin:** a smoothed view of each position's distribution, with measurements and outliers overlaid.
+- **Strip:** every measurement shown directly with stable horizontal jitter to reduce overlap.
+- **Histogram:** compact mirrored frequency bars for each element position, with measurements and outliers overlaid.
+
+Select a mode with either the executable or Python command:
+
+```powershell
+CWAnalysis.exe input.csv --plot-type violin
+.venv\Scripts\cw-analyse input.csv --plot-type histogram
+```
+
+The documentation images can be regenerated with:
+
+```powershell
+.venv\Scripts\python tools\generate_readme_plots.py
+```
+
+## Full example report
+
+View the complete report generated from the included 500-letter demonstration session:
+
+- [CW Analysis full example PDF](docs/examples/CW_Analysis_Example.pdf)
+- [500-letter source CSV](examples/sample_500_letters.csv)
+
+The example includes the session overview, A-Z and 0-9 summary pages, detailed per-character plots, position-bias observations, and the explanatory notes appendix.
+
 ## Install
 
 ```powershell
@@ -27,7 +64,7 @@ Python 3.10 or later is required.
 
 ## Standalone Windows executable
 
-Windows users can run `CWAnalysis.exe` without installing Python. Download the executable and run:
+Windows users can run `CWAnalysis.exe` without installing Python. [Download the latest Windows executable](https://github.com/mad-bee/CWAnalysis/releases/latest/download/CWAnalysis.exe) and run:
 
 ```powershell
 CWAnalysis.exe input.csv

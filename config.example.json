@@ -1,0 +1,20 @@
+{
+  "plot_type": "box",
+  "show_outliers": true,
+  "show_points": true,
+  "show_reference_lines": true,
+  "page_size": "A4",
+  "dpi": 160,
+  "units": "ms",
+  "delimiter": ",",
+  "outlier_method": "iqr",
+  "colours": {
+    "dit": "#2878B5",
+    "dah": "#D64541",
+    "median": "#111111",
+    "ideal": "#2A9D4B",
+    "outlier": "#F28E2B",
+    "point": "#303030"
+  }
+}
+

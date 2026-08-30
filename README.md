@@ -86,50 +86,113 @@ Windows may show a SmartScreen warning because community builds are not code-sig
 
 ## Run from Python source
 
-Python 3.10 or later is required. From the repository folder, create a virtual environment and install the application.
+These instructions assume no previous Python experience. Setup is required only once; after that, use the shorter steps under **Run it again later**.
 
-Windows PowerShell:
+### Windows: first-time setup
+
+1. Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/). In the Windows installer, select **Add python.exe to PATH** before choosing **Install Now**.
+2. Download this project from GitHub using **Code > Download ZIP**, then extract the ZIP to a folder such as `C:\Users\YourName\Documents\CWAnalysis`.
+3. Open that folder in File Explorer. Click the address bar, type `powershell`, and press Enter. A PowerShell window opens in the correct project folder.
+4. Check that Python is available:
+
+   ```powershell
+   py -3 --version
+   ```
+
+   A version such as `Python 3.12.4` confirms that Python is ready.
+
+5. Create a private Python environment for CWAnalysis:
+
+   ```powershell
+   py -3 -m venv .venv
+   ```
+
+   This creates a hidden `.venv` folder inside the project. It keeps CWAnalysis and its supporting packages separate from other Python programs.
+
+6. Install CWAnalysis and its required packages:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m pip install --upgrade pip
+   .\.venv\Scripts\python.exe -m pip install -e .
+   ```
+
+   The downloads may take several minutes. Wait until the command completes and the PowerShell prompt returns.
+
+7. Confirm the installation by analysing the included small example:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m cw_analyser examples\sample.csv
+   ```
+
+   When it finishes, open `output\pdf\CW_Analysis.pdf` to see the report.
+
+### Windows: analyse your own files
+
+Put a CSV file in the project folder and replace `input.csv` with its filename:
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[test]"
 .\.venv\Scripts\python.exe -m cw_analyser input.csv
 ```
 
-Multiple files use the same syntax:
+If the filename or path contains spaces, enclose it in quotation marks:
+
+```powershell
+.\.venv\Scripts\python.exe -m cw_analyser "C:\Users\YourName\Documents\CW recordings\session 1.csv"
+```
+
+List several files to combine all their measurements into one report:
 
 ```powershell
 .\.venv\Scripts\python.exe -m cw_analyser session1.csv session2.csv session3.csv -o combined-results
 ```
 
-If the `py` launcher is unavailable, use an installed Python 3 executable instead:
+Add `--fixed-scales` when all character plots should share one scale for direct comparison:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[test]"
+.\.venv\Scripts\python.exe -m cw_analyser input.csv --fixed-scales
+```
+
+The command has three main parts:
+
+- `.\.venv\Scripts\python.exe` runs the private Python installation created during setup.
+- `-m cw_analyser` starts CWAnalysis.
+- Everything after that identifies the CSV files and any options.
+
+### Windows: run it again later
+
+There is no need to reinstall anything. Open PowerShell in the extracted `CWAnalysis` folder and run:
+
+```powershell
 .\.venv\Scripts\python.exe -m cw_analyser input.csv
 ```
 
-macOS or Linux:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[test]"
-python -m cw_analyser input.csv
-```
-
-The installed `cw-analyse` command is an alternative to `python -m cw_analyser`. For example:
-
-```powershell
-.\.venv\Scripts\cw-analyse.exe input.csv --fixed-scales -o output\fixed
-```
-
-Show every Python command-line option with:
+Show every available option with:
 
 ```powershell
 .\.venv\Scripts\python.exe -m cw_analyser --help
 ```
+
+If `py` is not recognised during first-time setup, close and reopen PowerShell after installing Python. If it still does not work, replace `py -3` in the setup commands with `python`:
+
+```powershell
+python --version
+python -m venv .venv
+```
+
+### macOS or Linux
+
+Open a terminal in the extracted project folder, then run:
+
+```bash
+python3 --version
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+python -m cw_analyser examples/sample.csv
+```
+
+For later runs, return to the project folder, run `source .venv/bin/activate`, and then use `python -m cw_analyser input.csv`.
 
 ## Build the Windows executable
 

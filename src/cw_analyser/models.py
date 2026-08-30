@@ -10,6 +10,7 @@ class Issue:
     line: int
     reason: str
     row: str = ""
+    source: str = ""
 
 
 @dataclass(slots=True)
@@ -66,7 +67,7 @@ class CharacterAnalysis:
 
 @dataclass(slots=True)
 class SessionAnalysis:
-    source: Path
+    source: str | Path
     accepted: int
     rejected: int
     issue_counts: dict[str, int]

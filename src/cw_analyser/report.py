@@ -52,8 +52,8 @@ def write_error_csv(issues, path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream)
-        writer.writerow(["line", "reason", "row"])
-        writer.writerows((i.line, i.reason, i.row) for i in issues)
+        writer.writerow(["source", "line", "reason", "row"])
+        writer.writerows((i.source, i.line, i.reason, i.row) for i in issues)
     return path
 
 

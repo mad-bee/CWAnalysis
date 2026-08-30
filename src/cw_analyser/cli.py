@@ -6,14 +6,17 @@ import sys
 from pathlib import Path
 
 from .models import ReportConfig
-from .parser import parse_csv
+from .parser import parse_csvs
 from .report import write_error_csv, write_pdf, write_summary_csv
 from .statistics import analyse
 
 
+MAX_INPUT_FILES = 100
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Analyse Morse element timing per character position.")
-    parser.add_argument("input", type=Path, help="CSV input file")
+    parser.add_argument("inputs", type=Path, nargs="+", help="one or more CSV input files")
     parser.add_argument("-o", "--output-dir", type=Path, default=Path("output"))
     parser.add_argument("--delimiter")
     parser.add_argument("--units")
@@ -32,18 +35,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if not args.input.is_file():
-        print(f"error: input file not found: {args.input}", file=sys.stderr)
+    if len(args.inputs) > MAX_INPUT_FILES:
+        print(f"error: no more than {MAX_INPUT_FILES} input files may be analysed at once", file=sys.stderr)
+        return 2
+    missing = [path for path in args.inputs if not path.is_file()]
+    if missing:
+        print("error: input file not found: " + ", ".join(str(path) for path in missing), file=sys.stderr)
         return 2
     try:
         config = _config(args)
-        parsed = parse_csv(args.input, config.delimiter)
+        parsed = parse_csvs(args.inputs, config.delimiter)
         if not parsed.accepted:
             print("error: no valid records were found", file=sys.stderr)
             if parsed.issues:
                 write_error_csv(parsed.issues, args.output_dir / "CW_Errors.csv")
             return 1
-        session = analyse(parsed, args.input, config.outlier_method, config.units)
+        session = analyse(parsed, _source_description(args.inputs), config.outlier_method, config.units)
         pdf = write_pdf(session, args.output_dir / "pdf" / "CW_Analysis.pdf", config)
         summary = write_summary_csv(session, args.output_dir / "CW_Summary.csv")
         errors = write_error_csv(parsed.issues, args.output_dir / "CW_Errors.csv")
@@ -55,6 +62,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Summary: {summary}")
     print(f"Errors: {errors}")
     return 0
+
+
+def _source_description(paths: list[Path]) -> str:
+    if len(paths) <= 3:
+        return ", ".join(str(path) for path in paths)
+    first = ", ".join(str(path) for path in paths[:3])
+    return f"{first}, and {len(paths) - 3} more files"
 
 
 def _config(args) -> ReportConfig:

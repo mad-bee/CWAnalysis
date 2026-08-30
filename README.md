@@ -2,6 +2,8 @@
 
 Python 3 application that validates recorded CW timing CSV files, analyses every element position independently, and creates a printable PDF plus machine-readable statistics.
 
+One or more CSV recordings can be supplied in the same command. Their accepted measurements are combined into a single analysis and report; a maximum of 100 input files is supported per run. The character-record count is not capped at 5,000: files are parsed as streams, and the retained measurements are limited only by available memory.
+
 ## Features
 
 - Complete International Morse lookup for A-Z and 0-9.
@@ -62,6 +64,12 @@ Windows users can run `CWAnalysis.exe` without installing Python. [Download the 
 .\CWAnalysis.exe input.csv
 ```
 
+Combine multiple recordings by listing them before any options:
+
+```powershell
+.\CWAnalysis.exe session1.csv session2.csv session3.csv -o combined-results
+```
+
 For example, to analyse a file with comparable fixed scales and choose a different output folder:
 
 ```powershell
@@ -86,6 +94,12 @@ Windows PowerShell:
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[test]"
 .\.venv\Scripts\python.exe -m cw_analyser input.csv
+```
+
+Multiple files use the same syntax:
+
+```powershell
+.\.venv\Scripts\python.exe -m cw_analyser session1.csv session2.csv session3.csv -o combined-results
 ```
 
 If the `py` launcher is unavailable, use an installed Python 3 executable instead:
@@ -156,6 +170,7 @@ The first row may be a `Character,...` header. Two layouts are accepted:
 - recorder exports headed `Character,mark1,space1,mark2,space2,...`. The analyser uses the mark columns and ignores space and unused trailing columns.
 
 Invalid rows are skipped and included in `CW_Errors.csv`; up to 1,000 detailed error rows are retained while all rejection counts remain accurate.
+For multi-file analyses, `CW_Errors.csv` includes the source filename for every retained rejected row.
 
 Useful options:
 

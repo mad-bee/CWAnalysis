@@ -10,7 +10,7 @@ from .models import CharacterAnalysis, ElementStats, ParseResult, SessionAnalysi
 from .morse import MORSE, element_name
 
 
-def analyse(parse: ParseResult, source: Path, outlier_method: str = "iqr", units: str = "ms") -> SessionAnalysis:
+def analyse(parse: ParseResult, source: str | Path, outlier_method: str = "iqr", units: str = "ms") -> SessionAnalysis:
     characters: list[CharacterAnalysis] = []
     all_dits: list[float] = []
     all_dahs: list[float] = []

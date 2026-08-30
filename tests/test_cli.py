@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from cw_analyser.cli import _config
+from cw_analyser.cli import MAX_INPUT_FILES, _config, build_parser
 
 
 def test_json_config_is_used_when_cli_option_is_absent(tmp_path):
@@ -14,3 +14,9 @@ def test_json_config_is_used_when_cli_option_is_absent(tmp_path):
     assert config.plot_type == "strip"
     assert config.delimiter == ";"
     assert config.dpi == 120
+
+
+def test_cli_accepts_multiple_input_files():
+    args = build_parser().parse_args(["first.csv", "second.csv"])
+    assert [str(path) for path in args.inputs] == ["first.csv", "second.csv"]
+    assert MAX_INPUT_FILES == 100

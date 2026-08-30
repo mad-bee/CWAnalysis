@@ -21,7 +21,7 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
         rejected += 1
         counts[reason] = counts.get(reason, 0) + 1
         if len(issues) < MAX_RECORDED_ISSUES:
-            issues.append(Issue(line, reason, delimiter.join(row)[:300]))
+            issues.append(Issue(line, reason, delimiter.join(row)[:300], str(path)))
 
     with path.open("r", encoding="utf-8-sig", newline="") as stream:
         reader = csv.reader(stream, delimiter=delimiter)
@@ -60,6 +60,29 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
             accepted += 1
 
     return ParseResult(values, accepted, rejected, issues, counts)
+
+
+def parse_csvs(paths: list[Path], delimiter: str = ",") -> ParseResult:
+    """Parse and merge multiple CSV recordings into one result."""
+    combined_values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    combined_issues: list[Issue] = []
+    combined_counts: dict[str, int] = {}
+    accepted = rejected = 0
+
+    for path in paths:
+        parsed = parse_csv(path, delimiter)
+        for char, columns in parsed.values.items():
+            for position, timings in enumerate(columns):
+                combined_values[char][position].extend(timings)
+        accepted += parsed.accepted
+        rejected += parsed.rejected
+        remaining = MAX_RECORDED_ISSUES - len(combined_issues)
+        if remaining > 0:
+            combined_issues.extend(parsed.issues[:remaining])
+        for reason, count in parsed.issue_counts.items():
+            combined_counts[reason] = combined_counts.get(reason, 0) + count
+
+    return ParseResult(combined_values, accepted, rejected, combined_issues, combined_counts)
 
 
 def _finite_positive(value: float) -> bool:

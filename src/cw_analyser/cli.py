@@ -24,6 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hide-points", action="store_true")
     parser.add_argument("--hide-outliers", action="store_true")
     parser.add_argument("--hide-reference-lines", action="store_true")
+    parser.add_argument("--fixed-scales", action="store_true",
+                        help="use one data-fitted timing scale for every character plot")
     parser.add_argument("--config", type=Path, help="Optional JSON configuration file")
     return parser
 
@@ -74,6 +76,8 @@ def _config(args) -> ReportConfig:
         cli["show_outliers"] = False
     if args.hide_reference_lines:
         cli["show_reference_lines"] = False
+    if args.fixed_scales:
+        cli["fixed_scales"] = True
     values.update(cli)
     candidate = ReportConfig(**values)
     if len(candidate.delimiter) != 1:

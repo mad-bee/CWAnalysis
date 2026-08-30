@@ -138,13 +138,19 @@ def _recommendations(session):
 
 
 def _explanatory_notes(styles, config):
+    scale_note = (
+        "Every character plot uses the same session-wide data-fitted range, permitting direct visual comparison."
+        if config.fixed_scales else
+        "Each character plot uses its own data-fitted range so its timing variation remains easy to see."
+    )
     return [
         Paragraph("How to Read This Report", styles["Title"]),
         Paragraph("Axes and timing reference", styles["Heading2"]),
         Paragraph(
             f"Dah timing uses the red primary Y-axis on the left. Dit timing uses the blue secondary Y-axis on the right. "
             f"The axes are linked at exactly 3:1: a dah at 180 {config.units} is horizontally aligned with a dit at 60 {config.units}. "
-            "This permits direct visual comparison without making dits and dahs appear to use the same numerical duration.",
+            f"{scale_note} The range includes every recorded mark with padding and only starts at zero when the data requires it. "
+            "Dits and dahs do not appear to use the same numerical duration.",
             styles["NotesBody"],
         ),
         Paragraph(

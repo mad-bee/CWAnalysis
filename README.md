@@ -8,7 +8,7 @@ Python 3 application that validates recorded CW timing CSV files, analyses every
 - Streaming CSV ingestion: records are validated one at a time, so large inputs do not need a second in-memory copy.
 - Per-character and per-position descriptive statistics, 95% confidence intervals, skewness, excess kurtosis, MAD, CV, and outlier counts.
 - IQR or modified Z-score outlier detection.
-- Linked dual-axis plots: dah timing uses the primary left axis and dit timing uses the secondary right axis, fixed at an exact 3:1 scale. Plots retain reproducible jitter, coloured element types, outliers, medians, and ideal timing references.
+- Linked dual-axis plots: dah timing uses the primary left axis and dit timing uses the secondary right axis, fixed at an exact 3:1 scale. Character plots use individually optimised ranges by default; optional fixed scales use one data-fitted range across the session for direct comparison. Plots retain reproducible jitter, coloured element types, outliers, medians, and ideal timing references.
 - First-page histograms for all dits, all dahs, the final dah in each letter, and the first dah of every adjacent dah pair.
 - Separate visual summary pages for A-Z and 0-9. Letter panels reserve four element positions; number panels reserve five. Missing characters remain visible as labelled `No samples` panels. Detailed report pages contain six plots each.
 - Character consistency, position-bias observations, estimated WPM for millisecond input, and a transparent heuristic fist-quality score.
@@ -35,14 +35,14 @@ All plots analyse each element position separately. Dah timing uses the red left
 Select a mode with either the executable or Python command:
 
 ```powershell
-CWAnalysis.exe input.csv --plot-type violin
-.venv\Scripts\cw-analyse input.csv --plot-type histogram
+.\CWAnalysis.exe input.csv --plot-type violin
+.\.venv\Scripts\python.exe -m cw_analyser input.csv --plot-type histogram
 ```
 
 The documentation images can be regenerated with:
 
 ```powershell
-.venv\Scripts\python tools\generate_readme_plots.py
+.\.venv\Scripts\python.exe tools\generate_readme_plots.py
 ```
 
 ## Full example report
@@ -54,24 +54,70 @@ View the complete report generated from the included 500-letter demonstration se
 
 The example includes the session overview, A-Z and 0-9 summary pages, detailed per-character plots, position-bias observations, and the explanatory notes appendix.
 
-## Install
-
-```powershell
-py -m venv .venv
-.venv\Scripts\python -m pip install -e ".[test]"
-```
-
-Python 3.10 or later is required.
-
-## Standalone Windows executable
+## Run the standalone Windows executable
 
 Windows users can run `CWAnalysis.exe` without installing Python. [Download the latest Windows executable](https://github.com/mad-bee/CWAnalysis/releases/latest/download/CWAnalysis.exe) and run:
 
 ```powershell
-CWAnalysis.exe input.csv
+.\CWAnalysis.exe input.csv
 ```
 
-The generated report and CSV files are written beneath `output` in the current directory. Windows may show a SmartScreen warning because community builds are not code-signed.
+For example, to analyse a file with comparable fixed scales and choose a different output folder:
+
+```powershell
+.\CWAnalysis.exe C:\path\to\input.csv --fixed-scales -o C:\path\to\results
+```
+
+Show every available option with:
+
+```powershell
+.\CWAnalysis.exe --help
+```
+
+Windows may show a SmartScreen warning because community builds are not code-signed.
+
+## Run from Python source
+
+Python 3.10 or later is required. From the repository folder, create a virtual environment and install the application.
+
+Windows PowerShell:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[test]"
+.\.venv\Scripts\python.exe -m cw_analyser input.csv
+```
+
+If the `py` launcher is unavailable, use an installed Python 3 executable instead:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[test]"
+.\.venv\Scripts\python.exe -m cw_analyser input.csv
+```
+
+macOS or Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[test]"
+python -m cw_analyser input.csv
+```
+
+The installed `cw-analyse` command is an alternative to `python -m cw_analyser`. For example:
+
+```powershell
+.\.venv\Scripts\cw-analyse.exe input.csv --fixed-scales -o output\fixed
+```
+
+Show every Python command-line option with:
+
+```powershell
+.\.venv\Scripts\python.exe -m cw_analyser --help
+```
+
+## Build the Windows executable
 
 To build the executable from source:
 
@@ -81,19 +127,21 @@ To build the executable from source:
 
 The build script creates `dist\CWAnalysis.exe` using PyInstaller. A Windows build must be produced on Windows; executables for other operating systems must be built on those operating systems.
 
-## Run
+## Examples and outputs
+
+Run the small included example from Python:
 
 ```powershell
-.venv\Scripts\cw-analyse examples\sample.csv
+.\.venv\Scripts\python.exe -m cw_analyser examples\sample.csv
 ```
 
 A deterministic 500-letter example is also included:
 
 ```powershell
-.venv\Scripts\cw-analyse examples\sample_500_letters.csv -o output\example_500
+.\.venv\Scripts\python.exe -m cw_analyser examples\sample_500_letters.csv -o output\example_500
 ```
 
-Outputs:
+Unless `-o` or `--output-dir` is supplied, both the EXE and Python version write beneath `output` in the current directory:
 
 ```text
 output/
@@ -119,15 +167,16 @@ Useful options:
 --page-size A4|LETTER
 --dpi 72..600
 --hide-points --hide-outliers --hide-reference-lines
+--fixed-scales
 --config config.json
 ```
 
-See all options with `cw-analyse --help`. `config.example.json` contains the full colour scheme. Explicit command-line values take precedence over values read from the JSON configuration file.
+By default, each character plot uses its own optimised timing range. Add `--fixed-scales` to either the EXE or Python command to use one shared, data-fitted range across every character plot. `config.example.json` contains all configuration keys and the full colour scheme. Explicit command-line values take precedence over values read from the JSON configuration file.
 
 ## Tests
 
 ```powershell
-.venv\Scripts\python -m pytest
+.\.venv\Scripts\python.exe -m pytest
 ```
 
 ## Notes on scale

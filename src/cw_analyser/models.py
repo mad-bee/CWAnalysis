@@ -85,6 +85,7 @@ class ReportConfig:
     show_outliers: bool = True
     show_points: bool = True
     show_reference_lines: bool = True
+    fixed_scales: bool = False
     page_size: Literal["A4", "LETTER"] = "A4"
     dpi: int = 160
     units: str = "ms"

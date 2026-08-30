@@ -3,6 +3,7 @@
   "show_outliers": true,
   "show_points": true,
   "show_reference_lines": true,
+  "fixed_scales": false,
   "page_size": "A4",
   "dpi": 160,
   "units": "ms",

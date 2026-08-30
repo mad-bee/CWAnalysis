@@ -155,9 +155,13 @@ def _draw_character_axis(axis, character: CharacterAnalysis, session: SessionAna
         _draw_element(axis, element.position, plotted, np.asarray(element.outlier_mask),
                       element.element_type, config, rng, detail)
 
-    all_values = [v if e.element_type == "dah" else v * 3.0
-                  for e in character.elements for v in e.values]
-    _set_limits(axis, all_values)
+    character_values = [value if element.element_type == "dah" else value * 3.0
+                        for element in character.elements for value in element.values]
+    if config.fixed_scales:
+        _set_limits(axis, _session_plot_values(session), padding_fraction=0.05,
+                    preserve_positive_floor=True)
+    else:
+        _set_limits(axis, character_values)
     if config.show_reference_lines and math.isfinite(session.median_dit):
         axis.axhline(session.median_dit * 3.0, color=config.colours["ideal"], linestyle="--",
                     linewidth=0.9 if detail else 0.55, zorder=1)
@@ -222,12 +226,22 @@ def _draw_element(axis, position: int, values: np.ndarray, mask: np.ndarray, kin
                      edgecolors="white", linewidths=0.25, zorder=4)
 
 
-def _set_limits(axis, values: list[float]) -> None:
+def _set_limits(axis, values: list[float], padding_fraction: float = 0.12,
+                preserve_positive_floor: bool = False) -> None:
     if not values:
         return
     low, high = min(values), max(values)
-    pad = max((high - low) * 0.12, abs(high) * 0.025, 1e-6)
-    axis.set_ylim(max(0, low - pad), high + pad)
+    pad = max((high - low) * padding_fraction, abs(high) * 0.025, 1e-6)
+    lower_pad = min(pad, low * 0.5) if preserve_positive_floor and low > 0 else pad
+    axis.set_ylim(max(0, low - lower_pad), high + pad)
+
+
+def _session_plot_values(session: SessionAnalysis) -> list[float]:
+    """Return every timing on the shared dah-equivalent plotting scale."""
+    return [value if element.element_type == "dah" else value * 3.0
+            for character in session.characters
+            for element in character.elements
+            for value in element.values]
 
 
 def _draw_empty_summary_axis(axis, label: str, positions: int) -> None:

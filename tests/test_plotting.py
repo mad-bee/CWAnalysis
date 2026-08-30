@@ -32,6 +32,38 @@ def test_summary_axis_reserves_four_positions_for_short_character():
     plt.close(fig)
 
 
+def test_character_axes_use_individual_limits_by_default():
+    values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    values["A"] = [[50, 60], [150, 180]]
+    values["T"] = [[300, 360]]
+    session = analyse(ParseResult(values, 4, 0), Path("test.csv"))
+    config = ReportConfig()
+    fig, (axis_a, axis_t) = plt.subplots(1, 2)
+
+    _draw_character_axis(axis_a, session.characters[0], session, config, detail=True)
+    _draw_character_axis(axis_t, session.characters[1], session, config, detail=True)
+    assert axis_a.get_ylim() != axis_t.get_ylim()
+    plt.close(fig)
+
+
+def test_fixed_character_axes_share_optimised_session_limits():
+    values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    values["A"] = [[50, 60], [150, 180]]
+    values["T"] = [[300, 360]]
+    session = analyse(ParseResult(values, 4, 0), Path("test.csv"))
+    config = ReportConfig(fixed_scales=True)
+    fig, (axis_a, axis_t) = plt.subplots(1, 2)
+
+    _draw_character_axis(axis_a, session.characters[0], session, config, detail=True)
+    _draw_character_axis(axis_t, session.characters[1], session, config, detail=True)
+    fig.canvas.draw()
+
+    assert axis_a.get_ylim() == axis_t.get_ylim()
+    assert axis_a.get_ylim() == (139.5, 370.5)
+    assert axis_a.child_axes[0].get_ylim() == (46.5, 123.5)
+    plt.close(fig)
+
+
 def test_special_dah_populations_use_last_dah_and_each_adjacent_pair():
     values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
     values["M"] = [[101], [102]]

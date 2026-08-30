@@ -102,7 +102,12 @@ output/
   pdf/CW_Analysis.pdf
 ```
 
-The first row may be a `Character,...` header. All later rows must contain exactly the number of finite positive timing values defined by that character's Morse pattern. Invalid rows are skipped and included in `CW_Errors.csv`; up to 1,000 detailed error rows are retained while all rejection counts remain accurate.
+The first row may be a `Character,...` header. Two layouts are accepted:
+
+- compact rows containing one finite positive timing for each mark in the character's Morse pattern; and
+- recorder exports headed `Character,mark1,space1,mark2,space2,...`. The analyser uses the mark columns and ignores space and unused trailing columns.
+
+Invalid rows are skipped and included in `CW_Errors.csv`; up to 1,000 detailed error rows are retained while all rejection counts remain accurate.
 
 Useful options:
 

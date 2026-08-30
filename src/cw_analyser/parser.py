@@ -14,6 +14,7 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
     issues: list[Issue] = []
     counts: dict[str, int] = {}
     accepted = rejected = 0
+    alternating_mark_space = False
 
     def reject(line: int, reason: str, row: list[str]) -> None:
         nonlocal rejected
@@ -30,12 +31,19 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
                 continue
             char = row[0].strip().upper()
             if line == 1 and char in {"CHARACTER", "CHAR", "LETTER"}:
+                headings = [cell.strip().lower() for cell in row[1:]]
+                alternating_mark_space = bool(headings) and headings[0].startswith("mark")
                 continue
             if char not in MORSE:
                 reject(line, "unknown character", row)
                 continue
             expected = len(MORSE[char])
             cells = [cell.strip() for cell in row[1:]]
+            if alternating_mark_space:
+                # Recorder exports use mark1,space1,mark2,space2,... .  Only
+                # mark durations describe the keyed Morse elements; inter-mark
+                # spaces and unused trailing columns are intentionally ignored.
+                cells = cells[0 : expected * 2 : 2]
             if len(cells) != expected or any(cell == "" for cell in cells):
                 reject(line, "wrong element count", row)
                 continue
@@ -56,4 +64,3 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
 
 def _finite_positive(value: float) -> bool:
     return value > 0 and value != float("inf") and value != float("-inf") and value == value
-

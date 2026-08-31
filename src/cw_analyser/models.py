@@ -20,6 +20,7 @@ class ParseResult:
     rejected: int
     issues: list[Issue] = field(default_factory=list)
     issue_counts: dict[str, int] = field(default_factory=dict)
+    spaces: dict[str, list[list[float]]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -66,6 +67,30 @@ class CharacterAnalysis:
 
 
 @dataclass(slots=True)
+class SpacingStats:
+    character: str
+    position: int
+    space_type: Literal["intra-character", "inter-character"]
+    count: int
+    mean: float
+    median: float
+    standard_deviation: float
+    coefficient_of_variation: float
+    percentile_25: float
+    percentile_75: float
+    outlier_count: int
+    values: list[float] = field(repr=False)
+    outlier_mask: list[bool] = field(repr=False)
+
+
+@dataclass(slots=True)
+class CharacterSpacingAnalysis:
+    character: str
+    pattern: str
+    spaces: list[SpacingStats]
+
+
+@dataclass(slots=True)
 class SessionAnalysis:
     source: str | Path
     accepted: int
@@ -78,6 +103,11 @@ class SessionAnalysis:
     estimated_wpm: float | None
     overall_score: float
     stars: int
+    dit_standard_deviation_percent: float
+    dah_standard_deviation_percent: float
+    spacing: list[CharacterSpacingAnalysis]
+    median_intra_character_space: float
+    median_inter_character_space: float
 
 
 @dataclass(slots=True)

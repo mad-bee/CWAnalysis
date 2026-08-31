@@ -15,7 +15,8 @@ from reportlab.platypus import (BaseDocTemplate, Frame, Image, PageTemplate,
                                 Paragraph, PageBreak, Spacer, Table, TableStyle)
 
 from .models import ReportConfig, SessionAnalysis
-from .plotting import detail_sheet, overview_plot, summary_grid
+from .plotting import (detail_sheet, overview_plot, spacing_detail_sheet,
+                       spacing_overview_plot, summary_grid)
 
 
 def write_summary_csv(session: SessionAnalysis, path: Path) -> Path:
@@ -74,6 +75,11 @@ def write_pdf(session: SessionAnalysis, path: Path, config: ReportConfig) -> Pat
             detail_sheet(session.characters, session, config, temp / f"details_{start // 6 + 1}.png", start)
             for start in range(0, len(session.characters), 6)
         ]
+        spacing_overview = spacing_overview_plot(session, config, temp / "spacing_overview.png") if session.spacing else None
+        spacing_details = [
+            spacing_detail_sheet(session.spacing, config, temp / f"spacing_details_{start // 6 + 1}.png", start)
+            for start in range(0, len(session.spacing), 6)
+        ]
         doc = _NumberedDoc(str(path), pagesize=page_size, rightMargin=15 * mm, leftMargin=15 * mm,
                            topMargin=16 * mm, bottomMargin=15 * mm,
                            title="CW Analysis")
@@ -94,6 +100,14 @@ def write_pdf(session: SessionAnalysis, path: Path, config: ReportConfig) -> Pat
             ])
             if index != len(detail_paths) - 1:
                 story.append(PageBreak())
+        if spacing_overview:
+            story.extend([PageBreak(), *_spacing_story(session, spacing_overview, styles, config)])
+            for plot in spacing_details:
+                story.extend([
+                    PageBreak(), Paragraph("Detailed Character Spacing", styles["Title"]),
+                    Paragraph("Blue boxes are intra-character spaces; red boxes are inter-character spaces.", styles["SubTitle"]),
+                    Spacer(1, 2 * mm), Image(str(plot), width=174 * mm, height=223 * mm),
+                ])
         story.extend([PageBreak(), *_explanatory_notes(styles, config)])
         doc.build(story)
     return path
@@ -105,6 +119,8 @@ def _overview_story(session, overview, styles, config):
         ["Accepted characters", f"{session.accepted:,}", "Rejected records", f"{session.rejected:,}"],
         ["Median dit", _unit(session.median_dit, config.units), "Median dah", _unit(session.median_dah, config.units)],
         ["Dash/dit ratio", _n(session.dash_dit_ratio), "Estimated speed", f"{session.estimated_wpm:.1f} WPM" if session.estimated_wpm else "N/A"],
+        ["Dit SD (% of mean)", _percent(session.dit_standard_deviation_percent),
+         "Dah SD (% of mean)", _percent(session.dah_standard_deviation_percent)],
         ["Fist quality score", f"{session.overall_score:.1f}%", "Rating", stars],
     ]
     table = Table(metrics, colWidths=[42 * mm, 32 * mm, 42 * mm, 32 * mm])
@@ -120,6 +136,24 @@ def _overview_story(session, overview, styles, config):
         Paragraph(rejected, styles["BodyText"]), Spacer(1, 3 * mm),
         Paragraph("Recommendations", styles["Heading2"]),
         *[Paragraph(f"- {item}", styles["BodyText"]) for item in recommendations], PageBreak(),
+    ]
+
+
+def _spacing_story(session, overview, styles, config):
+    metrics = [
+        ["Intra-character median", _unit(session.median_intra_character_space, config.units),
+         "Inter-character median", _unit(session.median_inter_character_space, config.units)],
+        ["Characters analysed", str(len(session.spacing)), "Spacing source", "PCWFistCheck mark-space columns"],
+    ]
+    table = Table(metrics, colWidths=[42 * mm, 32 * mm, 42 * mm, 32 * mm])
+    table.setStyle(_table_style())
+    return [
+        Paragraph("Spacing Analysis", styles["Title"]),
+        Paragraph("Spaces after non-final marks are intra-character gaps; the space after the final mark is the inter-character gap.", styles["SubTitle"]),
+        Spacer(1, 4 * mm), table, Spacer(1, 5 * mm),
+        Image(str(overview), width=174 * mm, height=87 * mm), Spacer(1, 4 * mm),
+        Paragraph("Interpretation", styles["Heading2"]),
+        Paragraph("Consistent intra-character gaps support an even letter rhythm. Inter-character gaps should be clearly longer so adjacent letters remain distinct. These measurements are available only when the input contains alternating mark and space columns.", styles["BodyText"]),
     ]
 
 
@@ -195,6 +229,15 @@ def _explanatory_notes(styles, config):
             styles["NotesBody"],
         ),
         Paragraph(
+            "The front-page dit and dah SD percentages are the sample standard deviation of all corresponding marks divided by their mean. Lower values indicate more consistent mark duration.",
+            styles["NotesBody"],
+        ),
+        Paragraph("Spacing analysis", styles["Heading2"]),
+        Paragraph(
+            "For PCWFistCheck mark-space exports, the report analyses every positive finite space value. A space following a non-final mark is treated as an intra-character gap; the space following the final mark is treated as the inter-character gap. Compact mark-only CSV files do not produce spacing pages.",
+            styles["NotesBody"],
+        ),
+        Paragraph(
             "n is the number of accepted occurrences of the character. Complete per-position values - including mean, median, variance, standard deviation, MAD, quartiles, "
             "IQR, confidence interval, skewness, kurtosis and outlier rate - are exported to CW_Summary.csv beside this PDF.",
             styles["NotesBody"],
@@ -256,3 +299,7 @@ def _n(value):
 
 def _unit(value, units):
     return f"{_n(value)} {units}" if math.isfinite(value) else "N/A"
+
+
+def _percent(value):
+    return f"{_n(value)}%" if math.isfinite(value) else "N/A"

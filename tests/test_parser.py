@@ -44,6 +44,24 @@ def test_parser_accepts_alternating_mark_space_export(tmp_path: Path):
     assert result.values["E"] == [[37.0]]
     assert result.values["A"] == [[42.0], [136.0]]
     assert result.values["L"] == [[43.0], [131.0], [40.0], [39.0]]
+    assert result.spaces["E"] == [[190.0]]
+    assert result.spaces["A"] == [[8.0], [117.0]]
+    assert result.spaces["L"] == [[21.0], [36.0], [45.0], [118.0]]
+
+
+def test_parser_keeps_valid_marks_when_optional_space_is_missing_or_invalid(tmp_path: Path):
+    source = tmp_path / "markspace.csv"
+    source.write_text(
+        "Character,mark1,space1,mark2,space2\n"
+        "A,60,,180,bad\n",
+        encoding="utf-8",
+    )
+
+    result = parse_csv(source)
+
+    assert result.accepted == 1
+    assert result.values["A"] == [[60.0], [180.0]]
+    assert result.spaces["A"] == [[], []]
 
 
 def test_parser_combines_multiple_files_and_tracks_issue_sources(tmp_path: Path):
@@ -57,6 +75,7 @@ def test_parser_combines_multiple_files_and_tracks_issue_sources(tmp_path: Path)
     assert result.accepted == 2
     assert result.rejected == 1
     assert result.values["A"] == [[60.0, 62.0], [180.0, 186.0]]
+    assert result.spaces["A"] == [[], []]
     assert result.issues[0].source == str(second)
 
 

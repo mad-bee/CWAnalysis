@@ -11,6 +11,7 @@ MAX_RECORDED_ISSUES = 1000
 
 def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
     values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    spaces = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
     issues: list[Issue] = []
     counts: dict[str, int] = {}
     accepted = rejected = 0
@@ -43,6 +44,7 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
                 # Recorder exports use mark1,space1,mark2,space2,... .  Only
                 # mark durations describe the keyed Morse elements; inter-mark
                 # spaces and unused trailing columns are intentionally ignored.
+                spacing_cells = cells[1 : expected * 2 : 2]
                 cells = cells[0 : expected * 2 : 2]
             if len(cells) != expected or any(cell == "" for cell in cells):
                 reject(line, "wrong element count", row)
@@ -57,14 +59,23 @@ def parse_csv(path: Path, delimiter: str = ",") -> ParseResult:
                 continue
             for position, timing in enumerate(timings):
                 values[char][position].append(timing)
+            if alternating_mark_space:
+                for position, cell in enumerate(spacing_cells):
+                    try:
+                        spacing = float(cell)
+                    except ValueError:
+                        continue
+                    if _finite_positive(spacing):
+                        spaces[char][position].append(spacing)
             accepted += 1
 
-    return ParseResult(values, accepted, rejected, issues, counts)
+    return ParseResult(values, accepted, rejected, issues, counts, spaces)
 
 
 def parse_csvs(paths: list[Path], delimiter: str = ",") -> ParseResult:
     """Parse and merge multiple CSV recordings into one result."""
     combined_values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    combined_spaces = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
     combined_issues: list[Issue] = []
     combined_counts: dict[str, int] = {}
     accepted = rejected = 0
@@ -74,6 +85,9 @@ def parse_csvs(paths: list[Path], delimiter: str = ",") -> ParseResult:
         for char, columns in parsed.values.items():
             for position, timings in enumerate(columns):
                 combined_values[char][position].extend(timings)
+        for char, columns in parsed.spaces.items():
+            for position, timings in enumerate(columns):
+                combined_spaces[char][position].extend(timings)
         accepted += parsed.accepted
         rejected += parsed.rejected
         remaining = MAX_RECORDED_ISSUES - len(combined_issues)
@@ -82,7 +96,7 @@ def parse_csvs(paths: list[Path], delimiter: str = ",") -> ParseResult:
         for reason, count in parsed.issue_counts.items():
             combined_counts[reason] = combined_counts.get(reason, 0) + count
 
-    return ParseResult(combined_values, accepted, rejected, combined_issues, combined_counts)
+    return ParseResult(combined_values, accepted, rejected, combined_issues, combined_counts, combined_spaces)
 
 
 def _finite_positive(value: float) -> bool:

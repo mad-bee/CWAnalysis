@@ -6,7 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-from .models import CharacterAnalysis, ElementStats, ParseResult, SessionAnalysis
+from .models import (CharacterAnalysis, CharacterSpacingAnalysis, ElementStats,
+                     ParseResult, SessionAnalysis, SpacingStats)
 from .morse import MORSE, element_name
 
 
@@ -45,8 +46,57 @@ def analyse(parse: ParseResult, source: str | Path, outlier_method: str = "iqr",
     ratio_penalty = min(35.0, abs(ratio - 3.0) * 18.0) if math.isfinite(ratio) else 35.0
     score = _clamp(100.0 - avg_cv * 1.6 - ratio_penalty - outlier_rate * 100.0)
     stars = max(0, min(5, round(score / 20)))
+    spacing = _analyse_spacing(parse, outlier_method)
+    intra_spaces = [value for character in spacing for space in character.spaces
+                    if space.space_type == "intra-character" for value in space.values]
+    inter_spaces = [value for character in spacing for space in character.spaces
+                    if space.space_type == "inter-character" for value in space.values]
     return SessionAnalysis(source, parse.accepted, parse.rejected, parse.issue_counts, characters,
-                           median_dit, median_dah, ratio, estimated_wpm, score, stars)
+                           median_dit, median_dah, ratio, estimated_wpm, score, stars,
+                           _standard_deviation_percent(all_dits),
+                           _standard_deviation_percent(all_dahs), spacing,
+                           _median_or_nan(intra_spaces), _median_or_nan(inter_spaces))
+
+
+def _analyse_spacing(parse: ParseResult, method: str) -> list[CharacterSpacingAnalysis]:
+    analyses: list[CharacterSpacingAnalysis] = []
+    for char, pattern in MORSE.items():
+        columns = parse.spaces.get(char, [])
+        stats = [
+            _calculate_spacing(char, position + 1, "inter-character" if position == len(pattern) - 1 else "intra-character",
+                               values, method)
+            for position, values in enumerate(columns) if values
+        ]
+        if stats:
+            analyses.append(CharacterSpacingAnalysis(char, pattern, stats))
+    return analyses
+
+
+def _calculate_spacing(char: str, position: int, space_type: str,
+                       values: list[float], method: str) -> SpacingStats:
+    array = np.asarray(values, dtype=float)
+    p25, p75 = (float(x) for x in np.percentile(array, [25, 75]))
+    median = float(np.median(array))
+    mad = float(np.median(np.abs(array - median)))
+    mask = _outlier_mask(array, p25, p75, p75 - p25, median, mad, method)
+    mean = float(np.mean(array))
+    standard_deviation = float(np.std(array, ddof=1)) if len(array) > 1 else 0.0
+    return SpacingStats(
+        char, position, space_type, len(array), mean, median, standard_deviation,
+        standard_deviation / mean * 100.0 if mean else math.nan, p25, p75,
+        int(np.count_nonzero(mask)), list(map(float, array)), list(map(bool, mask)),
+    )
+
+
+def _standard_deviation_percent(values: list[float]) -> float:
+    if not values:
+        return math.nan
+    mean = st.fmean(values)
+    return st.stdev(values) / mean * 100.0 if len(values) > 1 and mean else 0.0
+
+
+def _median_or_nan(values: list[float]) -> float:
+    return float(np.median(values)) if values else math.nan
 
 
 def calculate_element(char: str, pattern: str, position: int, symbol: str,

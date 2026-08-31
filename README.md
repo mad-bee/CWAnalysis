@@ -14,6 +14,8 @@ One or more CSV recordings can be supplied in the same command. Their accepted m
 - First-page histograms for all dits, all dahs, the final dah in each letter, and the first dah of every adjacent dah pair.
 - Separate visual summary pages for A-Z and 0-9. Letter panels reserve four element positions; number panels reserve five. Missing characters remain visible as labelled `No samples` panels. Detailed report pages contain six plots each.
 - Character consistency, position-bias observations, estimated WPM for millisecond input, and a transparent heuristic fist-quality score.
+- Separate intra-character and inter-character spacing pages for PCWFistCheck mark-space exports; existing element-timing plots remain unchanged.
+- Front-page dit and dah standard deviation percentages for a quick view of overall mark consistency.
 - A4 or Letter PDF report, summary CSV, and rejected-row CSV.
 - Box, violin, strip, and compact histogram/rug plot modes.
 

@@ -27,4 +27,20 @@ def test_session_ratio_wpm_and_character_positions():
     assert session.estimated_wpm == 20
     assert session.characters[0].elements[0].position == 1
     assert session.characters[0].elements[1].position == 2
+    assert math.isclose(session.dit_standard_deviation_percent, 0.0)
+    assert math.isclose(session.dah_standard_deviation_percent, 0.0)
+
+
+def test_spacing_analysis_separates_intra_and_inter_character_spaces():
+    values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    spaces = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    values["A"] = [[60, 62], [180, 186]]
+    spaces["A"] = [[55, 65], [170, 190]]
+    session = analyse(ParseResult(values, 2, 0, spaces=spaces), Path("test.csv"))
+
+    assert len(session.spacing) == 1
+    assert [item.space_type for item in session.spacing[0].spaces] == ["intra-character", "inter-character"]
+    assert session.median_intra_character_space == 60
+    assert session.median_inter_character_space == 180
+    assert session.spacing[0].spaces[0].coefficient_of_variation > 0
 

@@ -14,7 +14,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .models import CharacterAnalysis, ReportConfig, SessionAnalysis
+from .models import (CharacterAnalysis, CharacterSpacingAnalysis, ReportConfig,
+                     SessionAnalysis)
 
 
 def character_plot(character: CharacterAnalysis, session: SessionAnalysis,
@@ -136,6 +137,86 @@ def detail_sheet(characters: list[CharacterAnalysis], session: SessionAnalysis,
     for axis in list(axes.flat)[len(selected):]:
         axis.axis("off")
     fig.subplots_adjust(left=0.085, right=0.915, top=0.985, bottom=0.055, hspace=0.64, wspace=0.38)
+    fig.savefig(output, dpi=config.dpi, facecolor="white")
+    plt.close(fig)
+    return output
+
+
+def spacing_overview_plot(session: SessionAnalysis, config: ReportConfig, output: Path) -> Path:
+    """Write spacing-only distributions without altering the element plots."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fig, axes = plt.subplots(1, 2, figsize=(8.0, 4.0))
+    intra = [value for character in session.spacing for space in character.spaces
+             if space.space_type == "intra-character" for value in space.values]
+    inter = [value for character in session.spacing for space in character.spaces
+             if space.space_type == "inter-character" for value in space.values]
+    for axis, values, title, colour in (
+        (axes[0], intra, "Intra-character spaces", config.colours["dit"]),
+        (axes[1], inter, "Inter-character spaces", config.colours["dah"]),
+    ):
+        if values:
+            axis.hist(values, bins="auto", color=colour, alpha=0.8, edgecolor="white")
+            median = float(np.median(values))
+            axis.axvline(median, color=config.colours["median"], linewidth=1.3,
+                         label=f"Median {median:.2f}")
+            axis.legend(fontsize=7, frameon=False)
+            title += f" (n={len(values):,})"
+        else:
+            axis.text(0.5, 0.5, "No matching spaces", transform=axis.transAxes,
+                      ha="center", va="center", fontsize=8, color="#7B8794")
+        axis.set_title(title, fontsize=10)
+        axis.set_xlabel(config.units, fontsize=8)
+        axis.set_ylabel("Measurements", fontsize=8)
+        axis.tick_params(labelsize=7)
+        axis.grid(axis="y", alpha=0.25)
+    fig.suptitle("Overall spacing distributions", fontsize=12, fontweight="bold")
+    fig.tight_layout(rect=(0, 0, 1, 0.94), w_pad=2.0)
+    fig.savefig(output, dpi=config.dpi, facecolor="white")
+    plt.close(fig)
+    return output
+
+
+def spacing_detail_sheet(characters: list[CharacterSpacingAnalysis], config: ReportConfig,
+                         output: Path, start: int = 0) -> Path:
+    """Write six per-character spacing plots on a new report page."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    selected = characters[start:start + 6]
+    fig, axes = plt.subplots(3, 2, figsize=(8.1, 10.4), squeeze=False)
+    rng = np.random.default_rng(0)
+    for axis, character in zip(axes.flat, selected):
+        for space in character.spaces:
+            values = np.asarray(space.values, dtype=float)
+            mask = np.asarray(space.outlier_mask)
+            colour = config.colours["dah"] if space.space_type == "inter-character" else config.colours["dit"]
+            axis.boxplot(values, positions=[space.position], widths=0.48, patch_artist=True, showfliers=False,
+                         boxprops={"facecolor": colour, "alpha": 0.38, "edgecolor": colour, "linewidth": 0.7},
+                         medianprops={"color": config.colours["median"], "linewidth": 1.0},
+                         whiskerprops={"color": colour, "linewidth": 0.7},
+                         capprops={"color": colour, "linewidth": 0.7})
+            if config.show_points:
+                normal = values[~mask]
+                axis.scatter(space.position + rng.uniform(-0.14, 0.14, len(normal)), normal,
+                             s=5, color=config.colours["point"], alpha=0.28, linewidths=0, zorder=3)
+            if config.show_outliers and np.any(mask):
+                outliers = values[mask]
+                axis.scatter(space.position + rng.uniform(-0.12, 0.12, len(outliers)), outliers,
+                             s=12, color=config.colours["outlier"], edgecolors="white",
+                             linewidths=0.25, zorder=4)
+        positions = [space.position for space in character.spaces]
+        labels = [f"after {position}" for position in positions]
+        axis.set_xticks(positions, labels)
+        axis.set_xlim(0.5, len(character.pattern) + 0.5)
+        axis.set_ylabel(f"Space ({config.units})", fontsize=7)
+        axis.set_title(f"{character.character}  {character.pattern}", fontsize=9, fontweight="bold", pad=5)
+        axis.tick_params(axis="both", labelsize=6)
+        axis.grid(axis="y", color="#D7DCE2", linewidth=0.45, alpha=0.8)
+        intra_count = sum(space.count for space in character.spaces if space.space_type == "intra-character")
+        inter_count = sum(space.count for space in character.spaces if space.space_type == "inter-character")
+        axis.text(0.0, -0.22, f"Blue: intra-character (n={intra_count}) | Red: inter-character (n={inter_count})",
+                  transform=axis.transAxes, fontsize=6, color="#425466", va="top")
+    for axis in list(axes.flat)[len(selected):]:
+        axis.axis("off")
+    fig.subplots_adjust(left=0.085, right=0.96, top=0.985, bottom=0.055, hspace=0.58, wspace=0.30)
     fig.savefig(output, dpi=config.dpi, facecolor="white")
     plt.close(fig)
     return output

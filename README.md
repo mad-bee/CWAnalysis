@@ -56,6 +56,14 @@ View the complete report generated from the included 500-letter demonstration se
 
 The example includes the session overview, A-Z and 0-9 summary pages, detailed per-character plots, position-bias observations, and the explanatory notes appendix.
 
+## CW sending practice text
+
+[The Quixotic Jazz Expedition](examples/The%20Quixotic%20Jazz%20Expedition.pdf) is a four-page story provided as practice copy for sending CW. It contains a varied mix of words and at least 100 occurrences of every letter from A to Z, giving users repeated practice with both common and less frequently encountered characters. Send it at a comfortable speed, record the session, and analyse the resulting timing CSV with CWAnalysis to track consistency and identify characters or element positions that need more practice.
+
+The PDF is source material to send, not an input file for CWAnalysis; the analyser accepts the recorded CSV produced during the practice session.
+
+The diamond symbols (`◆`) mark breaks in the practice text. Because PCWFistCheck limits the number of characters in a recording, stop at each diamond and export the mark-space data from PCWFistCheck before continuing with the next section. CWAnalysis can combine the exported CSV files into a single analysis.
+
 ## Run the standalone Windows executable
 
 Windows users can run `CWAnalysis.exe` without installing Python. [Download the latest Windows executable](https://github.com/mad-bee/CWAnalysis/releases/latest/download/CWAnalysis.exe) and run:

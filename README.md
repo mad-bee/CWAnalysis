@@ -66,6 +66,76 @@ The PDF is source material to send, not an input file for CWAnalysis; the analys
 
 The diamond symbols (`◆`) mark breaks in the practice text. Because PCWFistCheck limits the number of characters in a recording, stop at each diamond and export the mark-space data from PCWFistCheck before continuing with the next section. CWAnalysis can combine the exported CSV files into a single analysis.
 
+## What the files and folders are for
+
+If you only want to analyse your own recordings, you do not need to understand or edit the Python source files. The files you are most likely to use are:
+
+| File or folder | Purpose |
+| --- | --- |
+| `CWAnalysis.exe` | The ready-to-run Windows program supplied on the GitHub Releases page. It is not stored in the source download. |
+| `config.example.json` | An optional example configuration. Copy it to a new file such as `config.json`, change the settings you want, and select it with `--config config.json`. The original example can then remain unchanged for reference. |
+| `examples/sample.csv` | A small input recording for checking that the installation works. |
+| `examples/sample_500_letters.csv` | A larger, repeatable example used to demonstrate a full report. |
+| `examples/The Quixotic Jazz Expedition.pdf` | Practice text to send as CW. This PDF is reading material, not analyser input. |
+| `README.md` | This guide. GitHub displays it on the project home page. |
+| `output/` | The default results folder created when the analyser runs. It contains the PDF report and summary/error CSV files. |
+
+The remaining files are mainly for developers or people building the program themselves:
+
+| File or folder | Purpose |
+| --- | --- |
+| `pyproject.toml` | Defines the Python project, required packages, version, test settings, and the `cw-analyser` command. `pip install -e .` reads this file. |
+| `build_windows.ps1` | PowerShell script that installs the build tools and creates the Windows executable. |
+| `CWAnalysis.spec` | PyInstaller recipe used by `build_windows.ps1` to package the program as `CWAnalysis.exe`. |
+| `packaging_entry.py` | Small starting point used only by the packaged Windows executable. |
+| `src/cw_analyser/` | The program's Python source code. `cli.py` handles commands and options; `parser.py` reads CSV input; `statistics.py` calculates results; `plotting.py` creates charts; `report.py` creates PDF and CSV output; `morse.py` contains Morse patterns; `models.py` defines shared data structures; `__main__.py` supports running the package with Python; and `__init__.py` marks the folder as a Python package. |
+| `tests/` | Automated checks. `test_cli.py`, `test_parser.py`, `test_statistics.py`, `test_plotting.py`, and `test_export.py` cover the corresponding commands, input, calculations, charts, and output files. |
+| `tools/` | Developer utilities: `generate_example.py` recreates the large example dataset and `generate_readme_plots.py` recreates the four plot images. |
+| `docs/` | Documentation assets. `docs/images/` contains the README plot images and `docs/examples/CW_Analysis_Example.pdf` is the linked example report. |
+| `.venv/` | A private Python environment created during source setup. It is generated on your computer and should not be copied or edited manually. |
+| `build/` and `dist/` | Temporary build files and the finished executable created by `build_windows.ps1`. |
+
+### Using the JSON configuration file
+
+JSON is a plain-text format for saving settings. Using it is optional: without `--config`, CWAnalysis uses its built-in defaults and any options entered on the command line.
+
+To make your own configuration on Windows, copy the example and then open the new file in Notepad:
+
+```powershell
+Copy-Item config.example.json config.json
+notepad config.json
+```
+
+Run the analyser with that file:
+
+```powershell
+.\CWAnalysis.exe input.csv --config config.json
+```
+
+For the Python installation, use:
+
+```powershell
+.\.venv\Scripts\cw-analyser.exe input.csv --config config.json
+```
+
+The settings in `config.example.json` are:
+
+| Setting | What it controls |
+| --- | --- |
+| `plot_type` | Chart style: `box`, `violin`, `strip`, or `histogram`. |
+| `show_outliers` | Shows specially identified unusual measurements when `true`. |
+| `show_points` | Shows the individual measurements behind each distribution when `true`. |
+| `show_reference_lines` | Shows the green ideal-timing reference lines when `true`. |
+| `fixed_scales` | Uses shared timing scales across character plots when `true`, making direct comparisons easier. |
+| `page_size` | PDF paper size: `A4` or `LETTER`. |
+| `dpi` | Resolution of plot images in the PDF. Higher values are sharper but take more time and memory. The accepted range is 72 to 600. |
+| `units` | Text displayed beside timing values, normally `ms` or `ticks`. This changes the label only; it does not convert the measurements. |
+| `delimiter` | Character separating fields in the input, normally `,`. Use `;` for a semicolon-separated file. |
+| `outlier_method` | Method used to identify unusual values: `iqr` or `modified-z`. |
+| `colours` | Plot colours written as hexadecimal RGB values. `dit`, `dah`, `median`, `ideal`, `outlier`, and `point` can be changed independently. |
+
+JSON requires double quotation marks, commas between entries, and lowercase `true` or `false`. Do not place a comma after the final entry in an object. If the same setting appears both in the JSON file and on the command line, the command-line option takes precedence.
+
 ## Run the standalone Windows executable
 
 Windows users can run `CWAnalysis.exe` without installing Python. [Download the latest Windows executable](https://github.com/mad-bee/CWAnalysis/releases/latest/download/CWAnalysis.exe) and run:
@@ -241,7 +311,7 @@ output/
 The first row may be a `Character,...` header. Two layouts are accepted:
 
 - compact rows containing one finite positive timing for each mark in the character's Morse pattern; and
-- recorder exports headed `Character,mark1,space1,mark2,space2,...`. The analyser uses the mark columns and ignores space and unused trailing columns.
+- recorder exports headed `Character,mark1,space1,mark2,space2,...`. The analyser uses mark columns for element timing and valid space columns for spacing analysis; unused trailing columns are ignored.
 
 Invalid rows are skipped and included in `CW_Errors.csv`; up to 1,000 detailed error rows are retained while all rejection counts remain accurate.
 For multi-file analyses, `CW_Errors.csv` includes the source filename for every retained rejected row.

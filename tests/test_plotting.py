@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 from cw_analyser.models import ParseResult, ReportConfig
 from cw_analyser.morse import MORSE
-from cw_analyser.plotting import _draw_character_axis, _special_dah_values
+from cw_analyser.plotting import (_draw_character_axis, _draw_spacing_axis,
+                                  _special_dah_values, detail_sheet)
 from cw_analyser.statistics import analyse
 
 
@@ -73,3 +74,46 @@ def test_special_dah_populations_use_last_dah_and_each_adjacent_pair():
     last_dahs, first_pair_dahs = _special_dah_values(session)
     assert last_dahs == [102.0, 303.0, 202.0]
     assert first_pair_dahs == [101.0, 301.0, 302.0, 201.0]
+
+
+def test_spacing_axes_use_ideal_three_to_one_ratio():
+    values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    spaces = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    values["A"] = [[60, 61], [180, 183]]
+    spaces["A"] = [[55, 60], [170, 180]]
+    session = analyse(ParseResult(values, 2, 0, spaces=spaces), Path("test.csv"))
+    fig, axis = plt.subplots()
+
+    _draw_spacing_axis(axis, session.spacing[0], ReportConfig())
+    fig.canvas.draw()
+
+    secondary = axis.child_axes[0]
+    assert secondary.get_ylim()[0] == axis.get_ylim()[0] / 3
+    assert secondary.get_ylim()[1] == axis.get_ylim()[1] / 3
+    plt.close(fig)
+
+
+def test_detail_sheet_keeps_bottom_comment_lines_inside_image(tmp_path: Path, monkeypatch):
+    values = {char: [[] for _ in pattern] for char, pattern in MORSE.items()}
+    for char in "AEINRT":
+        values[char] = [[60, 61] if symbol == "." else [180, 183] for symbol in MORSE[char]]
+    session = analyse(ParseResult(values, 2, 0), Path("test.csv"))
+    output = tmp_path / "details.png"
+    comment_extents = []
+
+    def capture_comment_extents(figure, *_args, **_kwargs):
+        figure.canvas.draw()
+        renderer = figure.canvas.get_renderer()
+        comment_extents.extend(
+            text.get_window_extent(renderer)
+            for axis in figure.axes
+            for text in axis.texts
+            if text.get_text().startswith("Best ")
+        )
+
+    monkeypatch.setattr(plt.Figure, "savefig", capture_comment_extents)
+
+    detail_sheet(session.characters, session, ReportConfig(dpi=72), output)
+
+    assert len(comment_extents) == 6
+    assert min(extent.y0 for extent in comment_extents) >= 0

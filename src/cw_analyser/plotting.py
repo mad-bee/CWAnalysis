@@ -136,7 +136,7 @@ def detail_sheet(characters: list[CharacterAnalysis], session: SessionAnalysis,
                   transform=axis.transAxes, fontsize=5.7, color="#425466", va="top")
     for axis in list(axes.flat)[len(selected):]:
         axis.axis("off")
-    fig.subplots_adjust(left=0.085, right=0.915, top=0.985, bottom=0.055, hspace=0.64, wspace=0.38)
+    fig.subplots_adjust(left=0.085, right=0.915, top=0.985, bottom=0.105, hspace=0.76, wspace=0.38)
     fig.savefig(output, dpi=config.dpi, facecolor="white")
     plt.close(fig)
     return output
@@ -182,44 +182,57 @@ def spacing_detail_sheet(characters: list[CharacterSpacingAnalysis], config: Rep
     output.parent.mkdir(parents=True, exist_ok=True)
     selected = characters[start:start + 6]
     fig, axes = plt.subplots(3, 2, figsize=(8.1, 10.4), squeeze=False)
-    rng = np.random.default_rng(0)
     for axis, character in zip(axes.flat, selected):
-        for space in character.spaces:
-            values = np.asarray(space.values, dtype=float)
-            mask = np.asarray(space.outlier_mask)
-            colour = config.colours["dah"] if space.space_type == "inter-character" else config.colours["dit"]
-            axis.boxplot(values, positions=[space.position], widths=0.48, patch_artist=True, showfliers=False,
-                         boxprops={"facecolor": colour, "alpha": 0.38, "edgecolor": colour, "linewidth": 0.7},
-                         medianprops={"color": config.colours["median"], "linewidth": 1.0},
-                         whiskerprops={"color": colour, "linewidth": 0.7},
-                         capprops={"color": colour, "linewidth": 0.7})
-            if config.show_points:
-                normal = values[~mask]
-                axis.scatter(space.position + rng.uniform(-0.14, 0.14, len(normal)), normal,
-                             s=5, color=config.colours["point"], alpha=0.28, linewidths=0, zorder=3)
-            if config.show_outliers and np.any(mask):
-                outliers = values[mask]
-                axis.scatter(space.position + rng.uniform(-0.12, 0.12, len(outliers)), outliers,
-                             s=12, color=config.colours["outlier"], edgecolors="white",
-                             linewidths=0.25, zorder=4)
-        positions = [space.position for space in character.spaces]
-        labels = [f"after {position}" for position in positions]
-        axis.set_xticks(positions, labels)
-        axis.set_xlim(0.5, len(character.pattern) + 0.5)
-        axis.set_ylabel(f"Space ({config.units})", fontsize=7)
-        axis.set_title(f"{character.character}  {character.pattern}", fontsize=9, fontweight="bold", pad=5)
-        axis.tick_params(axis="both", labelsize=6)
-        axis.grid(axis="y", color="#D7DCE2", linewidth=0.45, alpha=0.8)
-        intra_count = sum(space.count for space in character.spaces if space.space_type == "intra-character")
-        inter_count = sum(space.count for space in character.spaces if space.space_type == "inter-character")
-        axis.text(0.0, -0.22, f"Blue: intra-character (n={intra_count}) | Red: inter-character (n={inter_count})",
-                  transform=axis.transAxes, fontsize=6, color="#425466", va="top")
+        _draw_spacing_axis(axis, character, config)
     for axis in list(axes.flat)[len(selected):]:
         axis.axis("off")
-    fig.subplots_adjust(left=0.085, right=0.96, top=0.985, bottom=0.055, hspace=0.58, wspace=0.30)
+    fig.subplots_adjust(left=0.09, right=0.91, top=0.985, bottom=0.095, hspace=0.72, wspace=0.48)
     fig.savefig(output, dpi=config.dpi, facecolor="white")
     plt.close(fig)
     return output
+
+
+def _draw_spacing_axis(axis, character: CharacterSpacingAnalysis, config: ReportConfig) -> None:
+    """Plot linked inter- and intra-character spacing scales at the ideal 3:1 ratio."""
+    rng = np.random.default_rng(0)
+    plotted_values: list[float] = []
+    for space in character.spaces:
+        raw_values = np.asarray(space.values, dtype=float)
+        mask = np.asarray(space.outlier_mask)
+        is_inter = space.space_type == "inter-character"
+        values = raw_values if is_inter else raw_values * 3.0
+        plotted_values.extend(values)
+        colour = config.colours["dah"] if is_inter else config.colours["dit"]
+        axis.boxplot(values, positions=[space.position], widths=0.48, patch_artist=True, showfliers=False,
+                     boxprops={"facecolor": colour, "alpha": 0.38, "edgecolor": colour, "linewidth": 0.7},
+                     medianprops={"color": config.colours["median"], "linewidth": 1.0},
+                     whiskerprops={"color": colour, "linewidth": 0.7},
+                     capprops={"color": colour, "linewidth": 0.7})
+        if config.show_points:
+            normal = values[~mask]
+            axis.scatter(space.position + rng.uniform(-0.14, 0.14, len(normal)), normal,
+                         s=5, color=config.colours["point"], alpha=0.28, linewidths=0, zorder=3)
+        if config.show_outliers and np.any(mask):
+            outliers = values[mask]
+            axis.scatter(space.position + rng.uniform(-0.12, 0.12, len(outliers)), outliers,
+                         s=12, color=config.colours["outlier"], edgecolors="white",
+                         linewidths=0.25, zorder=4)
+    _set_limits(axis, plotted_values)
+    positions = [space.position for space in character.spaces]
+    axis.set_xticks(positions, [f"after {position}" for position in positions])
+    axis.set_xlim(0.5, len(character.pattern) + 0.5)
+    axis.set_ylabel(f"Inter-character ({config.units})", color=config.colours["dah"], fontsize=7)
+    secondary = axis.secondary_yaxis("right", functions=(lambda value: value / 3.0, lambda value: value * 3.0))
+    secondary.set_ylabel(f"Intra-character ({config.units})", color=config.colours["dit"], fontsize=7)
+    secondary.tick_params(axis="y", labelsize=6, colors=config.colours["dit"])
+    axis.set_title(f"{character.character}  {character.pattern}", fontsize=9, fontweight="bold", pad=5)
+    axis.tick_params(axis="x", labelsize=6)
+    axis.tick_params(axis="y", labelsize=6, colors=config.colours["dah"])
+    axis.grid(axis="y", color="#D7DCE2", linewidth=0.45, alpha=0.8)
+    intra_count = sum(space.count for space in character.spaces if space.space_type == "intra-character")
+    inter_count = sum(space.count for space in character.spaces if space.space_type == "inter-character")
+    axis.text(0.0, -0.22, f"Blue: intra-character (n={intra_count}) | Red: inter-character (n={inter_count})",
+              transform=axis.transAxes, fontsize=6, color="#425466", va="top")
 
 
 def _draw_character_axis(axis, character: CharacterAnalysis, session: SessionAnalysis,

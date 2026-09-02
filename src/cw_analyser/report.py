@@ -105,7 +105,7 @@ def write_pdf(session: SessionAnalysis, path: Path, config: ReportConfig) -> Pat
             for plot in spacing_details:
                 story.extend([
                     PageBreak(), Paragraph("Detailed Character Spacing", styles["Title"]),
-                    Paragraph("Blue boxes are intra-character spaces; red boxes are inter-character spaces.", styles["SubTitle"]),
+                    Paragraph("Red inter-character spacing uses the left axis; blue intra-character spacing uses the linked 3:1 right axis.", styles["SubTitle"]),
                     Spacer(1, 2 * mm), Image(str(plot), width=174 * mm, height=223 * mm),
                 ])
         story.extend([PageBreak(), *_explanatory_notes(styles, config)])

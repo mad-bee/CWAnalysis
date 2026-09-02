@@ -19,6 +19,8 @@ test = ["pypdf>=4.0", "pytest>=8.0"]
 build = ["pyinstaller>=6.0"]
 
 [project.scripts]
+cw-analyser = "cw_analyser.cli:main"
+# Retained for compatibility with installations and instructions before 1.0.3.
 cw-analyse = "cw_analyser.cli:main"
 
 [tool.setuptools.packages.find]

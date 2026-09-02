@@ -40,7 +40,7 @@ Select a mode with either the executable or Python command:
 
 ```powershell
 .\CWAnalysis.exe input.csv --plot-type violin
-.\.venv\Scripts\python.exe -m cw_analyser input.csv --plot-type histogram
+.\.venv\Scripts\cw-analyser.exe input.csv --plot-type histogram
 ```
 
 The documentation images can be regenerated with:
@@ -131,7 +131,7 @@ These instructions assume no previous Python experience. Setup is required only 
 7. Confirm the installation by analysing the included small example:
 
    ```powershell
-   .\.venv\Scripts\python.exe -m cw_analyser examples\sample.csv
+   .\.venv\Scripts\cw-analyser.exe examples\sample.csv
    ```
 
    When it finishes, open `output\pdf\CW_Analysis.pdf` to see the report.
@@ -141,45 +141,46 @@ These instructions assume no previous Python experience. Setup is required only 
 Put a CSV file in the project folder and replace `input.csv` with its filename:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser input.csv
+.\.venv\Scripts\cw-analyser.exe input.csv
 ```
 
 If the filename or path contains spaces, enclose it in quotation marks:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser "C:\Users\YourName\Documents\CW recordings\session 1.csv"
+.\.venv\Scripts\cw-analyser.exe "C:\Users\YourName\Documents\CW recordings\session 1.csv"
 ```
 
 List several files to combine all their measurements into one report:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser session1.csv session2.csv session3.csv -o combined-results
+.\.venv\Scripts\cw-analyser.exe session1.csv session2.csv session3.csv -o combined-results
 ```
 
 Add `--fixed-scales` when all character plots should share one scale for direct comparison:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser input.csv --fixed-scales
+.\.venv\Scripts\cw-analyser.exe input.csv --fixed-scales
 ```
 
-The command has three main parts:
+The command has two main parts:
 
-- `.\.venv\Scripts\python.exe` runs the private Python installation created during setup.
-- `-m cw_analyser` starts CWAnalysis.
-- Everything after that identifies the CSV files and any options.
+- `.\.venv\Scripts\cw-analyser.exe` starts CWAnalysis using the private Python installation created during setup. The command uses a hyphen because Python command names cannot contain underscores.
+- Everything after it identifies the CSV files and any options. The underlying Python package is named `cw_analyser`, using the underscore required for Python imports.
+
+The former `cw-analyse` command remains available as a compatibility alias, but new instructions and scripts should use `cw-analyser`.
 
 ### Windows: run it again later
 
 There is no need to reinstall anything. Open PowerShell in the extracted `CWAnalysis` folder and run:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser input.csv
+.\.venv\Scripts\cw-analyser.exe input.csv
 ```
 
 Show every available option with:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser --help
+.\.venv\Scripts\cw-analyser.exe --help
 ```
 
 If `py` is not recognised during first-time setup, close and reopen PowerShell after installing Python. If it still does not work, replace `py -3` in the setup commands with `python`:
@@ -199,10 +200,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e .
-python -m cw_analyser examples/sample.csv
+cw-analyser examples/sample.csv
 ```
 
-For later runs, return to the project folder, run `source .venv/bin/activate`, and then use `python -m cw_analyser input.csv`.
+For later runs, return to the project folder, run `source .venv/bin/activate`, and then use `cw-analyser input.csv`.
 
 ## Build the Windows executable
 
@@ -219,13 +220,13 @@ The build script creates `dist\CWAnalysis.exe` using PyInstaller. A Windows buil
 Run the small included example from Python:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser examples\sample.csv
+.\.venv\Scripts\cw-analyser.exe examples\sample.csv
 ```
 
 A deterministic 500-letter example is also included:
 
 ```powershell
-.\.venv\Scripts\python.exe -m cw_analyser examples\sample_500_letters.csv -o output\example_500
+.\.venv\Scripts\cw-analyser.exe examples\sample_500_letters.csv -o output\example_500
 ```
 
 Unless `-o` or `--output-dir` is supplied, both the EXE and Python version write beneath `output` in the current directory:
